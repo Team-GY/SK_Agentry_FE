@@ -23,13 +23,16 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    docker.withRegistry("https://${IMAGE_REGISTRY}", "${DOCKER_CREDENTIAL_ID}") {
-                        def appImage = docker.build("${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}", "--platform=linux/amd64 .")
-                        appImage.push()
+                    withDockerRegistry([url: "https://${IMAGE_REGISTRY}", credentialsId: "${DOCKER_CREDENTIAL_ID}"]) {
+                        sh """
+                            docker build --platform=linux/amd64 -t ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker push ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        """
                     }
                 }
             }
         }
+
 
         stage('Deploy to Kubernetes') {
             steps {
